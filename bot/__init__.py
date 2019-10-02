@@ -1,4 +1,5 @@
 import discord
+
 from discord.ext import commands
 
 from .entities import Quote
@@ -22,10 +23,13 @@ async def squote(ctx: commands.Context, author: discord.Member, *quote: str):
 
 
 @bot.command()
-async def rquote(ctx, author: discord.Member = None):
+async def rquote(ctx: commands.Context, author: discord.Member = None):
     """
     Retrieves a random quote [by author, if supplied]
     """
-    quote: Quote = await get_random_quote(author)
+    guild: discord.Guild = ctx.guild
+    quote: Quote = await get_random_quote(author, guild)
 
-    await ctx.send(quote.content)
+    message = f"{quote.content} - _{quote.author}_, {quote.timestamp.year}"
+
+    await ctx.send(message)

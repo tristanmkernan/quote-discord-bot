@@ -1,7 +1,6 @@
 import discord
 
 from datetime import datetime
-from functools import singledispatch
 from peewee import fn
 
 from bot.entities import Quote as QuoteEntity
@@ -18,26 +17,25 @@ async def save_quote(
     invoker_id: int = invoker.id
 
     QuoteModel.create(
-        guild_id=guild.id,
+        guild_id=guild_id,
         content=content,
         author=author_name,
         author_id=author_id,
         invoker=invoker_name,
         invoker_id=invoker_id,
-        # TODO enforce solid datetime rules
         timestamp=datetime.utcnow(),
     )
 
 
-@singledispatch
-async def get_random_quote(_) -> QuoteEntity:
-    quote: QuoteModel = QuoteModel.select().order_by(fn.Random()).get()
-    return QuoteEntity(quote.content, quote.author, quote.timestamp)
+async def get_random_quote(author: discord.Member, guild: discord.Guild) -> QuoteEntity:
+    query = QuoteModel.select().order_by(fn.Random())
 
+    if author is not None:
+        query = query.filter(QuoteModel.author_id == author.id)
 
-@get_random_quote.register
-async def _(author: discord.Member) -> QuoteEntity:
-    quote: QuoteModel = QuoteModel.select().filter(
-        QuoteModel.author_id == author.id
-    ).order_by(fn.Random()).get()
+    if guild is not None:
+        query = query.filter(QuoteModel.guild_id == guild.id)
+
+    quote: QuoteModel = query.get()
+
     return QuoteEntity(quote.content, quote.author, quote.timestamp)
