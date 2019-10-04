@@ -16,5 +16,13 @@ class Quote(Model):
         database = db
 
 
+class QuoteMessageLog(Model):
+    quote = ForeignKeyField(Quote)
+    message_id = BigIntegerField()
+
+    class Meta:
+        database = db
+
+
 def init_db():
-    db.create_tables([Quote])
+    db.create_tables([Quote, QuoteMessageLog])

@@ -4,6 +4,7 @@ from datetime import datetime
 
 @dataclass(frozen=True)
 class Quote(object):
+    id: int
     content: str
     author: str
     timestamp: datetime

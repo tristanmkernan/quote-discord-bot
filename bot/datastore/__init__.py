@@ -4,7 +4,7 @@ from datetime import datetime
 from peewee import fn
 
 from bot.entities import Quote as QuoteEntity, BotStats
-from bot.datastore.database import Quote as QuoteModel
+from bot.datastore.database import Quote as QuoteModel, QuoteMessageLog
 
 
 async def save_quote(
@@ -27,6 +27,13 @@ async def save_quote(
     )
 
 
+async def save_quote_log(message: discord.Message, quote: QuoteEntity) -> None:
+    message_id: int = message.id
+    quote_id: int = quote.id
+
+    QuoteMessageLog.create(message_id=message_id, quote_id=quote_id)
+
+
 async def get_random_quote(author: discord.Member, guild: discord.Guild) -> QuoteEntity:
     query = QuoteModel.select().order_by(fn.Random())
 
@@ -38,13 +45,24 @@ async def get_random_quote(author: discord.Member, guild: discord.Guild) -> Quot
 
     quote: QuoteModel = query.get()
 
-    return QuoteEntity(quote.content, quote.author, quote.timestamp)
+    return QuoteEntity(quote.id, quote.content, quote.author, quote.timestamp)
+
+
+async def delete_quote(message: discord.Message) -> None:
+    message_log = (
+        QuoteMessageLog.select().where(QuoteMessageLog.message_id == message.id).get()
+    )
+
+    message_log.quote.delete_instance()
 
 
 async def get_bot_stats() -> BotStats:
-    guild_count = (
-        QuoteModel.select(fn.COUNT(QuoteModel.guild_id))
-        .distinct(QuoteModel.guild_id)
-        .scalar()
-    )
-    return None
+    guild_count = QuoteModel.select(QuoteModel.guild_id).distinct().count()
+
+    user_count = QuoteModel.select(QuoteModel.author_id).distinct().count()
+
+    quote_count = QuoteModel.select().count()
+
+    stats: BotStats = BotStats(quote_count, guild_count, user_count)
+
+    return stats
