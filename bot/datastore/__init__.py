@@ -3,7 +3,7 @@ import discord
 from datetime import datetime
 from peewee import fn
 
-from bot.entities import Quote as QuoteEntity
+from bot.entities import Quote as QuoteEntity, BotStats
 from bot.datastore.database import Quote as QuoteModel
 
 
@@ -39,3 +39,12 @@ async def get_random_quote(author: discord.Member, guild: discord.Guild) -> Quot
     quote: QuoteModel = query.get()
 
     return QuoteEntity(quote.content, quote.author, quote.timestamp)
+
+
+async def get_bot_stats() -> BotStats:
+    guild_count = (
+        QuoteModel.select(fn.COUNT(QuoteModel.guild_id))
+        .distinct(QuoteModel.guild_id)
+        .scalar()
+    )
+    return None
