@@ -4,4 +4,5 @@ services:
     env_file:
       - .env
     build: .
-    
+    volumes:
+      - ${PWD}/app.sqlite3:/app.sqlite3
